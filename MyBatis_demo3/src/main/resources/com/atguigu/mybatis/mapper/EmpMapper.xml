@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.atguigu.mybatis.mapper.EmpMapper">
+
+    <resultMap id="empResultMap" type="Emp">
+        <!--id设置主键的映射关系-->
+        <id property="eid" column="eid"></id>
+        <!--result设置普通字段的映射关系-->
+        <result property="empName" column="emp_name"></result>
+        <result property="age" column="age"></result>
+        <result property="sex" column="sex"></result>
+        <result property="email" column="email"></result>
+    </resultMap>
+
+    <!--List<Emp> getAllEmp();-->
+    <select id="getAllEmp" resultMap="empResultMap">
+        select eid, emp_name, age, sex, email from t_emp;
+    </select>
+    
+    <resultMap id="empWithDeptResultMap" type="Emp">
+        <!--id设置主键的映射关系-->
+        <id property="eid" column="eid"></id>
+        <!--result设置普通字段的映射关系-->
+        <result property="empName" column="emp_name"></result>
+        <result property="age" column="age"></result>
+        <result property="sex" column="sex"></result>
+        <result property="email" column="email"></result>
+
+        <!--方式1：级联属性赋值-->
+<!--        <result property="dept.did" column="did"></result>-->
+<!--        <result property="dept.deptName" column="dept_name"></result>-->
+
+        <!--方式2：association-->
+        <association property="dept" javaType="Dept">
+            <id property="did" column="did"></id>
+            <result property="deptName" column="dept_name"></result>
+        </association>
+
+    </resultMap>
+    
+    <!--Emp getEmpWithDept(int eid);-->
+    <select id="getEmpWithDept" resultMap="empWithDeptResultMap">
+        select * from t_emp left join t_dept on t_emp.did = t_dept.did
+            where eid = #{eid};
+    </select>
+
+    <!--分布查询实现多对一-->
+    <resultMap id="EmpWithDeptByStepResultMap" type="Emp">
+        <!--id设置主键的映射关系-->
+        <id property="eid" column="eid"></id>
+        <!--result设置普通字段的映射关系-->
+        <result property="empName" column="emp_name"></result>
+        <result property="age" column="age"></result>
+        <result property="sex" column="sex"></result>
+        <result property="email" column="email"></result>
+
+        <!--方式3：分布查询** 用的最大的方式解决一对多、多对一-->
+        <!--
+            select: sql的唯一标识，命名空间.id 或 mapper接口全类名.方法名
+            column：分布查询的条件
+            fetchType: 当开启了全局的延迟加载后，可通过此属性手动控制是否延迟加载
+                eager 立即加载
+                lazy 延迟加载
+         -->
+        <association property="dept"
+                     select="com.atguigu.mybatis.mapper.DeptMapper.getEmpWithDeptByStepTwo"
+                     column="did">
+        </association>
+
+    </resultMap>
+    
+    <!--Emp getEmpWithDeptByStep(int eid);-->
+    <select id="getEmpWithDeptByStep" resultMap="EmpWithDeptByStepResultMap">
+        select * from t_emp where eid = #{eid};
+    </select>
+
+    <!--List<Emp> getEmpByDid(@Param("did") int did);-->
+    <select id="getEmpByDid" resultType="Emp">
+        select * from t_emp where did = #{did};
+    </select>
+
+</mapper>
